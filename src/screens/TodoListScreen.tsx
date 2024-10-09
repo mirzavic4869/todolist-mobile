@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { View, TextInput, Button, StyleSheet, FlatList } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import TodoItem from "../components/TodoItem";
@@ -69,6 +69,12 @@ const TodoListScreen: React.FC = () => {
 		saveTodos(updatedTodos);
 	};
 
+	const updateTodo = (id: string, newText: string) => {
+		const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, text: newText } : todo));
+		setTodos(updatedTodos);
+		saveTodos(updatedTodos);
+	};
+
 	const filterTodos = (): Todo[] => {
 		switch (filter) {
 			case FILTERS.ACTIVE:
@@ -90,17 +96,6 @@ const TodoListScreen: React.FC = () => {
 		});
 	};
 
-	useEffect(() => {
-		registerForPushNotifications();
-	}, []);
-
-	const registerForPushNotifications = async () => {
-		const { status } = await Notifications.requestPermissionsAsync();
-		if (status !== "granted") {
-			alert("You need to grant permission for notifications");
-		}
-	};
-
 	return (
 		<View style={styles.container}>
 			<TextInput style={styles.input} placeholder="Add new todo" value={text} onChangeText={setText} />
@@ -112,7 +107,7 @@ const TodoListScreen: React.FC = () => {
 				<Button title="Completed" onPress={() => setFilter(FILTERS.COMPLETED)} />
 			</View>
 
-			<FlatList data={filterTodos()} keyExtractor={(item) => item.id} renderItem={({ item }) => <TodoItem item={item} toggleComplete={toggleComplete} deleteTodo={deleteTodo} />} />
+			<FlatList data={filterTodos()} keyExtractor={(item) => item.id} renderItem={({ item }) => <TodoItem item={item} toggleComplete={toggleComplete} deleteTodo={deleteTodo} updateTodo={updateTodo} />} />
 		</View>
 	);
 };
