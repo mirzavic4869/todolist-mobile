@@ -1,45 +1,37 @@
-import React, { useState } from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity, TextInput } from "react-native";
+// TodoItem.tsx
+import React from "react";
+import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
 
 interface TodoItemProps {
 	item: {
 		id: string;
 		text: string;
 		completed: boolean;
+		date: string;
+		time: string;
 	};
 	toggleComplete: (id: string) => void;
 	deleteTodo: (id: string) => void;
 	updateTodo: (id: string, newText: string) => void;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo, updateTodo }) => {
-	const [isEditing, setIsEditing] = useState(false);
-	const [newText, setNewText] = useState(item.text);
-
-	const handleSaveEdit = () => {
-		updateTodo(item.id, newText);
-		setIsEditing(false);
-	};
-
+const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo }) => {
 	return (
 		<View style={styles.todoItem}>
-			{isEditing ? (
-				<TextInput style={styles.input} value={newText} onChangeText={setNewText} />
-			) : (
+			<View style={styles.textContainer}>
 				<TouchableOpacity onPress={() => toggleComplete(item.id)}>
 					<Text style={item.completed ? styles.completed : styles.notCompleted}>{item.text}</Text>
 				</TouchableOpacity>
-			)}
-
+				<Text style={styles.dateText}>
+					{new Date(item.date).toLocaleDateString("en-GB", {
+						day: "numeric",
+						month: "short",
+					})}{" "}
+					• {item.time}
+				</Text>
+			</View>
 			<View style={styles.buttons}>
-				{isEditing ? (
-					<Button title="Save" onPress={handleSaveEdit} />
-				) : (
-					<>
-						<Button title="Edit" onPress={() => setIsEditing(true)} />
-						<Button title="Delete" onPress={() => deleteTodo(item.id)} />
-					</>
-				)}
+				<Button title="Delete" onPress={() => deleteTodo(item.id)} />
 			</View>
 		</View>
 	);
@@ -52,23 +44,35 @@ const styles = StyleSheet.create({
 		padding: 10,
 		marginVertical: 5,
 		backgroundColor: "#f9f9f9",
+		borderRadius: 10,
+		borderWidth: 1,
+		borderColor: "#ddd",
+		shadowColor: "#000",
+		shadowOpacity: 0.1,
+		shadowRadius: 3,
+		elevation: 1,
+	},
+	textContainer: {
+		flex: 1,
 	},
 	completed: {
 		textDecorationLine: "line-through",
 		color: "gray",
+		fontSize: 16,
+		fontWeight: "bold",
 	},
 	notCompleted: {
 		textDecorationLine: "none",
+		fontSize: 16,
+		fontWeight: "bold",
+	},
+	dateText: {
+		fontSize: 14,
+		color: "gray",
+		marginTop: 5,
 	},
 	buttons: {
-		flexDirection: "row",
-		justifyContent: "space-between",
-	},
-	input: {
-		borderBottomWidth: 1,
-		borderBottomColor: "#ccc",
-		padding: 5,
-		width: 200,
+		justifyContent: "center",
 	},
 });
 

@@ -1,8 +1,13 @@
 import { StyleSheet } from "react-native";
 import TodoListScreen from "./src/screens/TodoListScreen";
+import React from "react";
 
 export default function App() {
-	return <TodoListScreen />;
+	return (
+		<>
+			<TodoListScreen />
+		</>
+	);
 }
 
 const styles = StyleSheet.create({

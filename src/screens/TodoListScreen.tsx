@@ -1,27 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, FlatList } from "react-native";
+import { View, TextInput, Button, StyleSheet, FlatList, Text } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Notifications from "expo-notifications";
 import TodoItem from "../components/TodoItem";
+import CalendarScreen from "./CalendarScreen";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 interface Todo {
 	id: string;
 	text: string;
 	completed: boolean;
+	date: string;
+	time: string;
 }
-
-const FILTERS = {
-	ALL: "ALL",
-	ACTIVE: "ACTIVE",
-	COMPLETED: "COMPLETED",
-} as const;
-
-type Filter = (typeof FILTERS)[keyof typeof FILTERS];
 
 const TodoListScreen: React.FC = () => {
 	const [todos, setTodos] = useState<Todo[]>([]);
 	const [text, setText] = useState("");
-	const [filter, setFilter] = useState<Filter>(FILTERS.ALL);
+	const [selectedDate, setSelectedDate] = useState<string | null>(null);
+	const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED">("ALL");
+	const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+	const [showTimePicker, setShowTimePicker] = useState(false);
 
 	useEffect(() => {
 		loadTodos();
@@ -47,13 +45,22 @@ const TodoListScreen: React.FC = () => {
 	};
 
 	const addTodo = () => {
-		if (text.trim()) {
-			const newTodo: Todo = { id: Date.now().toString(), text, completed: false };
+		if (text.trim() && selectedDate && selectedTime) {
+			const newTodo: Todo = {
+				id: Date.now().toString(),
+				text,
+				completed: false,
+				date: selectedDate,
+				time: selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), // Add time to the todo
+			};
 			const updatedTodos = [newTodo, ...todos];
 			setTodos(updatedTodos);
 			saveTodos(updatedTodos);
-			scheduleNotification(newTodo.text);
 			setText("");
+			setSelectedDate(null);
+			setSelectedTime(null);
+		} else {
+			alert("Please select a date and time before adding a todo.");
 		}
 	};
 
@@ -77,34 +84,44 @@ const TodoListScreen: React.FC = () => {
 
 	const filterTodos = (): Todo[] => {
 		switch (filter) {
-			case FILTERS.ACTIVE:
+			case "ACTIVE":
 				return todos.filter((todo) => !todo.completed);
-			case FILTERS.COMPLETED:
+			case "COMPLETED":
 				return todos.filter((todo) => todo.completed);
 			default:
 				return todos;
 		}
 	};
 
-	const scheduleNotification = async (todoText: string) => {
-		await Notifications.scheduleNotificationAsync({
-			content: {
-				title: "Reminder!",
-				body: `You have a pending task: ${todoText}`,
-			},
-			trigger: { seconds: 60 },
-		});
-	};
-
 	return (
 		<View style={styles.container}>
+			{/* Render CalendarScreen and pass the selected date */}
+			<CalendarScreen onSelectDate={(date) => setSelectedDate(date)} />
+
+			<Button title="Select Time" onPress={() => setShowTimePicker(true)} />
+			{showTimePicker && (
+				<DateTimePicker
+					value={selectedTime || new Date()}
+					mode="time"
+					display="default"
+					onChange={(event, date) => {
+						setShowTimePicker(false); // Hide time picker after selecting
+						if (date) setSelectedTime(date); // Set the selected time
+					}}
+				/>
+			)}
+
 			<TextInput style={styles.input} placeholder="Add new todo" value={text} onChangeText={setText} />
 			<Button title="Add Todo" onPress={addTodo} />
 
+			{/* Ensure selectedDate and selectedTime are rendered in <Text> components */}
+			{selectedDate && <Text>Selected Date: {selectedDate}</Text>}
+			{selectedTime && <Text>Selected Time: {selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>}
+
 			<View style={styles.filters}>
-				<Button title="All" onPress={() => setFilter(FILTERS.ALL)} />
-				<Button title="Active" onPress={() => setFilter(FILTERS.ACTIVE)} />
-				<Button title="Completed" onPress={() => setFilter(FILTERS.COMPLETED)} />
+				<Button title="All" onPress={() => setFilter("ALL")} />
+				<Button title="Active" onPress={() => setFilter("ACTIVE")} />
+				<Button title="Completed" onPress={() => setFilter("COMPLETED")} />
 			</View>
 
 			<FlatList data={filterTodos()} keyExtractor={(item) => item.id} renderItem={({ item }) => <TodoItem item={item} toggleComplete={toggleComplete} deleteTodo={deleteTodo} updateTodo={updateTodo} />} />
