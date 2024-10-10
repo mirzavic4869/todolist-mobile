@@ -1,6 +1,8 @@
 // TodoItem.tsx
 import React from "react";
-import { View, Text, Button, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Button, StyleSheet, TouchableOpacity, Animated } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 interface TodoItemProps {
 	item: {
@@ -17,25 +19,42 @@ interface TodoItemProps {
 }
 
 const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo, editTodo }) => {
+	const renderRightActions = (_progress: Animated.AnimatedInterpolation, dragX: Animated.AnimatedInterpolation) => {
+		const scale = dragX.interpolate({
+			inputRange: [-100, 0],
+			outputRange: [1, 0],
+			extrapolate: "clamp",
+		});
+
+		return (
+			<TouchableOpacity onPress={() => deleteTodo(item.id)}>
+				<Animated.View style={[styles.deleteButton, { transform: [{ scale }] }]}>
+					<Text style={styles.deleteButtonText}>Delete</Text>
+				</Animated.View>
+			</TouchableOpacity>
+		);
+	};
+
 	return (
-		<View style={styles.todoItem}>
-			<View style={styles.textContainer}>
-				<TouchableOpacity onPress={() => toggleComplete(item.id)}>
-					<Text style={item.completed ? styles.completed : styles.notCompleted}>{item.text}</Text>
-				</TouchableOpacity>
-				<Text style={styles.dateText}>
-					{new Date(item.date).toLocaleDateString("en-GB", {
-						day: "numeric",
-						month: "short",
-					})}{" "}
-					• {item.time}
-				</Text>
+		<Swipeable renderRightActions={renderRightActions}>
+			<View style={styles.todoItem}>
+				<View style={styles.textContainer}>
+					<TouchableOpacity onPress={() => toggleComplete(item.id)}>
+						<Text style={item.completed ? styles.completed : styles.notCompleted}>{item.text}</Text>
+					</TouchableOpacity>
+					<Text style={styles.dateText}>
+						{new Date(item.date).toLocaleDateString("en-GB", {
+							day: "numeric",
+							month: "short",
+						})}{" "}
+						• {item.time}
+					</Text>
+				</View>
+				<View style={styles.buttons}>
+					<MaterialIcons name="mode-edit" size={24} color={"#198754"} onPress={() => editTodo(item.id)} />
+				</View>
 			</View>
-			<View style={styles.buttons}>
-				<Button color={"#198754"} title="Edit" onPress={() => editTodo(item.id)} />
-				<Button color={"#dc3545"} title="Delete" onPress={() => deleteTodo(item.id)} />
-			</View>
-		</View>
+		</Swipeable>
 	);
 };
 
@@ -79,6 +98,19 @@ const styles = StyleSheet.create({
 		alignItems: "center",
 		flexDirection: "row",
 		gap: 10,
+	},
+	deleteButton: {
+		backgroundColor: "#dc3545",
+		justifyContent: "center",
+		alignItems: "center",
+		width: 100,
+		marginVertical: 5,
+		marginRight: 10,
+		borderRadius: 10,
+	},
+	deleteButtonText: {
+		color: "#fff",
+		fontWeight: "bold",
 	},
 });
 

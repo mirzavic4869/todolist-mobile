@@ -6,6 +6,7 @@ import CalendarScreen from "./CalendarScreen";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
 interface Todo {
 	id: string;
@@ -209,12 +210,11 @@ const TodoListScreen: React.FC = () => {
 					/>
 				)}
 
-				<TextInput style={styles.input} placeholder={isEditing ? "Edit Todo" : "Add Todo"} value={text} onChangeText={setText} />
-
-				<View style={{ marginVertical: 10 }}>
-					<Button color={"#0d6efd"} title={isEditing ? "Update Todo" : "Add Todo"} onPress={isEditing ? updateTodo : addTodo} />
+				<View style={{ display: "flex", justifyContent: "center", alignItems: "center", flexDirection: "row", marginVertical: 10, gap: 2 }}>
+					<TextInput style={styles.input} placeholder={isEditing ? "Edit Todo" : "Add Todo"} value={text} onChangeText={setText} />
+					<MaterialIcons name="add-box" size={50} color="#0d6efd" onPress={addTodo} />
 				</View>
-
+				<View style={{ marginVertical: 10 }}>{isEditing && <Button color={"#0d6efd"} title="Update Todo" onPress={updateTodo} />}</View>
 				<View style={styles.filters}>
 					<Button color={"#0d6efd"} title="All" onPress={() => setFilter("ALL")} />
 					<Button color={"#0d6efd"} title="Active" onPress={() => setFilter("ACTIVE")} />
@@ -235,8 +235,8 @@ const styles = StyleSheet.create({
 	input: {
 		borderColor: "#ddd",
 		borderWidth: 1,
-		padding: 10,
-		marginBottom: 10,
+		padding: 8,
+		width: "85%",
 	},
 	filters: {
 		flexDirection: "row",
