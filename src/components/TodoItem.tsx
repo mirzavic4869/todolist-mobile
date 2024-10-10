@@ -11,11 +11,12 @@ interface TodoItemProps {
 		time: string;
 	};
 	toggleComplete: (id: string) => void;
+	editTodo: (id: string) => void;
 	deleteTodo: (id: string) => void;
 	updateTodo: (id: string, newText: string) => void;
 }
 
-const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo }) => {
+const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo, editTodo }) => {
 	return (
 		<View style={styles.todoItem}>
 			<View style={styles.textContainer}>
@@ -31,7 +32,8 @@ const TodoItem: React.FC<TodoItemProps> = ({ item, toggleComplete, deleteTodo })
 				</Text>
 			</View>
 			<View style={styles.buttons}>
-				<Button title="Delete" onPress={() => deleteTodo(item.id)} />
+				<Button color={"#198754"} title="Edit" onPress={() => editTodo(item.id)} />
+				<Button color={"#dc3545"} title="Delete" onPress={() => deleteTodo(item.id)} />
 			</View>
 		</View>
 	);
@@ -43,7 +45,7 @@ const styles = StyleSheet.create({
 		justifyContent: "space-between",
 		padding: 10,
 		marginVertical: 5,
-		backgroundColor: "#f9f9f9",
+		backgroundColor: "#fefefe",
 		borderRadius: 10,
 		borderWidth: 1,
 		borderColor: "#ddd",
@@ -72,7 +74,11 @@ const styles = StyleSheet.create({
 		marginTop: 5,
 	},
 	buttons: {
-		justifyContent: "center",
+		justifyContent: "space-between",
+		display: "flex",
+		alignItems: "center",
+		flexDirection: "row",
+		gap: 10,
 	},
 });
 

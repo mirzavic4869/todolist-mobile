@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, TextInput, Button, StyleSheet, FlatList, Text } from "react-native";
+import { View, TextInput, Button, StyleSheet, FlatList, Text, Alert, ScrollView } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import TodoItem from "../components/TodoItem";
 import CalendarScreen from "./CalendarScreen";
@@ -20,6 +20,8 @@ const TodoListScreen: React.FC = () => {
 	const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "COMPLETED">("ALL");
 	const [selectedTime, setSelectedTime] = useState<Date | null>(null);
 	const [showTimePicker, setShowTimePicker] = useState(false);
+	const [isEditing, setIsEditing] = useState(false); // State to track if we're editing
+	const [editTodoId, setEditTodoId] = useState<string | null>(null); // State to track which todo we're editing
 
 	useEffect(() => {
 		loadTodos();
@@ -51,16 +53,55 @@ const TodoListScreen: React.FC = () => {
 				text,
 				completed: false,
 				date: selectedDate,
-				time: selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), // Add time to the todo
+				time: selectedTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }),
 			};
 			const updatedTodos = [newTodo, ...todos];
 			setTodos(updatedTodos);
 			saveTodos(updatedTodos);
+
+			// Reset input fields after adding todo
 			setText("");
 			setSelectedDate(null);
 			setSelectedTime(null);
 		} else {
 			alert("Please select a date and time before adding a todo.");
+		}
+	};
+
+	const editTodo = (id: string) => {
+		const todoToEdit = todos.find((todo) => todo.id === id);
+		if (todoToEdit) {
+			setText(todoToEdit.text);
+			setSelectedDate(todoToEdit.date);
+			setSelectedTime(new Date(`${todoToEdit.date} ${todoToEdit.time}`)); // Set time using existing todo's time
+			setEditTodoId(todoToEdit.id);
+			setIsEditing(true); // Set to editing mode
+		}
+	};
+
+	const updateTodo = () => {
+		if (editTodoId && text.trim() && selectedDate && selectedTime) {
+			const updatedTodos = todos.map((todo) =>
+				todo.id === editTodoId
+					? {
+							...todo,
+							text,
+							date: selectedDate,
+							time: selectedTime.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }),
+					  }
+					: todo
+			);
+			setTodos(updatedTodos);
+			saveTodos(updatedTodos);
+
+			// Reset input fields after editing todo
+			setText("");
+			setSelectedDate(null);
+			setSelectedTime(null);
+			setEditTodoId(null);
+			setIsEditing(false);
+		} else {
+			alert("Please select a date and time before updating the todo.");
 		}
 	};
 
@@ -72,12 +113,6 @@ const TodoListScreen: React.FC = () => {
 
 	const toggleComplete = (id: string) => {
 		const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, completed: !todo.completed } : todo));
-		setTodos(updatedTodos);
-		saveTodos(updatedTodos);
-	};
-
-	const updateTodo = (id: string, newText: string) => {
-		const updatedTodos = todos.map((todo) => (todo.id === id ? { ...todo, text: newText } : todo));
 		setTodos(updatedTodos);
 		saveTodos(updatedTodos);
 	};
@@ -94,38 +129,41 @@ const TodoListScreen: React.FC = () => {
 	};
 
 	return (
-		<View style={styles.container}>
-			{/* Render CalendarScreen and pass the selected date */}
-			<CalendarScreen onSelectDate={(date) => setSelectedDate(date)} />
+		<ScrollView>
+			<View style={styles.container}>
+				<CalendarScreen onSelectDate={(date) => setSelectedDate(date)} />
 
-			<Button title="Select Time" onPress={() => setShowTimePicker(true)} />
-			{showTimePicker && (
-				<DateTimePicker
-					value={selectedTime || new Date()}
-					mode="time"
-					display="default"
-					onChange={(event, date) => {
-						setShowTimePicker(false); // Hide time picker after selecting
-						if (date) setSelectedTime(date); // Set the selected time
-					}}
-				/>
-			)}
+				<View style={{ marginVertical: 10 }}>
+					<Button color={"#0d6efd"} title="Select Time" onPress={() => setShowTimePicker(true)} />
+				</View>
 
-			<TextInput style={styles.input} placeholder="Add new todo" value={text} onChangeText={setText} />
-			<Button title="Add Todo" onPress={addTodo} />
+				{showTimePicker && (
+					<DateTimePicker
+						value={selectedTime || new Date()}
+						mode="time"
+						display="default"
+						onChange={(event, date) => {
+							setShowTimePicker(false);
+							if (date) setSelectedTime(date);
+						}}
+					/>
+				)}
 
-			{/* Ensure selectedDate and selectedTime are rendered in <Text> components */}
-			{selectedDate && <Text>Selected Date: {selectedDate}</Text>}
-			{selectedTime && <Text>Selected Time: {selectedTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>}
+				<TextInput style={styles.input} placeholder={isEditing ? "Edit Todo" : "Add Todo"} value={text} onChangeText={setText} />
 
-			<View style={styles.filters}>
-				<Button title="All" onPress={() => setFilter("ALL")} />
-				<Button title="Active" onPress={() => setFilter("ACTIVE")} />
-				<Button title="Completed" onPress={() => setFilter("COMPLETED")} />
+				<View style={{ marginVertical: 10 }}>
+					<Button color={"#0d6efd"} title={isEditing ? "Update Todo" : "Add Todo"} onPress={isEditing ? updateTodo : addTodo} />
+				</View>
+
+				<View style={styles.filters}>
+					<Button color={"#0d6efd"} title="All" onPress={() => setFilter("ALL")} />
+					<Button color={"#0d6efd"} title="Active" onPress={() => setFilter("ACTIVE")} />
+					<Button color={"#0d6efd"} title="Completed" onPress={() => setFilter("COMPLETED")} />
+				</View>
+
+				<FlatList data={filterTodos()} keyExtractor={(item) => item.id} renderItem={({ item }) => <TodoItem item={item} toggleComplete={toggleComplete} deleteTodo={deleteTodo} editTodo={editTodo} />} />
 			</View>
-
-			<FlatList data={filterTodos()} keyExtractor={(item) => item.id} renderItem={({ item }) => <TodoItem item={item} toggleComplete={toggleComplete} deleteTodo={deleteTodo} updateTodo={updateTodo} />} />
-		</View>
+		</ScrollView>
 	);
 };
 
@@ -143,7 +181,7 @@ const styles = StyleSheet.create({
 	filters: {
 		flexDirection: "row",
 		justifyContent: "space-between",
-		marginBottom: 20,
+		marginVertical: 10,
 	},
 });
 
