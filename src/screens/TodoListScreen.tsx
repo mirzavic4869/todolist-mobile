@@ -94,7 +94,12 @@ const TodoListScreen: React.FC = () => {
 		if (todoToEdit) {
 			setText(todoToEdit.text);
 			setSelectedDate(todoToEdit.date);
-			setSelectedTime(new Date(`${todoToEdit.date} ${todoToEdit.time}`)); // Set time using existing todo's time
+			const [hours, minutes] = todoToEdit.time.split(":");
+			const formattedTime = new Date();
+			formattedTime.setHours(parseInt(hours));
+			formattedTime.setMinutes(parseInt(minutes));
+
+			setSelectedTime(formattedTime); // Set time menggunakan waktu yang sudah diformat
 			setEditTodoId(todoToEdit.id);
 			setIsEditing(true); // Set to editing mode
 		}
