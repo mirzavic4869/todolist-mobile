@@ -1,21 +1,43 @@
-// CalendarScreen.tsx
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Calendar } from "react-native-calendars";
 
-interface CalendarScreenProps {
-	onSelectDate: (date: string) => void; // Prop for sending selected date
+interface TodoItem {
+	id: string;
+	text: string;
+	completed: boolean;
+	date: string;
+	time: string;
 }
 
-const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
+interface CalendarScreenProps {
+	todos: TodoItem[];
+	onSelectDate: (date: string) => void;
+}
+
+const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate, todos }) => {
 	const [selectedView, setSelectedView] = useState<"Monthly" | "Daily">("Monthly");
-	const [markedDates, setMarkedDates] = useState({});
+	const [markedDates, setMarkedDates] = useState<{ [key: string]: any }>({});
+
+	useEffect(() => {
+		// Mark the dates with todo items
+		const marked = todos.reduce((acc: { [key: string]: any }, item) => {
+			acc[item.date] = {
+				marked: true,
+				dotColor: "red",
+			};
+			return acc;
+		}, {});
+
+		setMarkedDates(marked);
+	}, [todos]);
 
 	const handleDayPress = (day: { dateString: string }) => {
-		// Mark the selected date
-		setMarkedDates({
+		// Mark the selected date and retain other markings
+		setMarkedDates((prev) => ({
+			...prev,
 			[day.dateString]: { selected: true, selectedColor: "blue" },
-		});
+		}));
 
 		// Call the parent function with the selected date
 		onSelectDate(day.dateString);
@@ -35,7 +57,7 @@ const CalendarScreen: React.FC<CalendarScreenProps> = ({ onSelectDate }) => {
 			<Calendar
 				current={"2024-02-01"}
 				markedDates={markedDates}
-				onDayPress={handleDayPress} // Select a day
+				onDayPress={handleDayPress}
 				theme={{
 					arrowColor: "black",
 					todayTextColor: "#00adf5",

@@ -197,7 +197,7 @@ const TodoListScreen: React.FC = () => {
 	return (
 		<ScrollView>
 			<View style={styles.container}>
-				<CalendarScreen onSelectDate={(date) => setSelectedDate(date)} />
+				<CalendarScreen todos={todos} onSelectDate={(date) => setSelectedDate(date)} />
 
 				<View style={{ marginVertical: 10 }}>
 					<Button color={"#0d6efd"} title="Select Time" onPress={() => setShowTimePicker(true)} />
